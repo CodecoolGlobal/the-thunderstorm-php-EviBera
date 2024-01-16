@@ -24,7 +24,7 @@ class WeatherStatController extends Controller
         // Query and calculations
         $results = DB::select(DB::raw("
             SELECT
-                DAYNAME(wm.measurement_date) as day_of_week,
+                DAYNAME(measurement_date) as day_of_week,
                 MIN(CASE WHEN wa.attribute_name = 'Temperature' THEN wm.value ELSE NULL END) as min_temperature,
                 AVG(CASE WHEN wa.attribute_name = 'Wind Speed' THEN wm.value ELSE NULL END) as avg_wind_speed,
                 MAX(CASE WHEN wa.attribute_name = 'Precipitation' THEN wm.value ELSE NULL END) as max_precipitation,
@@ -34,9 +34,7 @@ class WeatherStatController extends Controller
             JOIN
                 weather_attributes wa ON wm.attribute_id = wa.attribute_id
             GROUP BY
-                DAYNAME(wm.measurement_date)
-            ORDER BY
-                FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+                DAYNAME(measurement_date)
             "));
 
         $row = 2;
@@ -53,9 +51,8 @@ class WeatherStatController extends Controller
             $row++;
         }
 
-        // Ensure only 8 rows (including header)
-        for (; $row <= 8; $row++) {
-            $sheet->fromArray([null, null, null, null, null], null, 'A' . $row);
+        foreach (range('A', $sheet->getHighestColumn()) as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
         // Stream the file back to the user
