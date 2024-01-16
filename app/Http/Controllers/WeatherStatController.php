@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -12,7 +13,6 @@ class WeatherStatController extends Controller
 {
     public function exportToExcel()
     {
-
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Weather data');
@@ -51,9 +51,20 @@ class WeatherStatController extends Controller
             $row++;
         }
 
+        // Set column width according to content length
         foreach (range('A', $sheet->getHighestColumn()) as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
+
+        // Set the page orientation to landscape
+        $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+
+        // Set the print area
+        $sheet->getPageSetup()->setPrintArea('A1:E8');
+
+        // Fit to one page wide and one page tall
+        $sheet->getPageSetup()->setFitToWidth(1);
+        $sheet->getPageSetup()->setFitToHeight(1);
 
         // Stream the file back to the user
         $response = new StreamedResponse(function() use ($spreadsheet) {
